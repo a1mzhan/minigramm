@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block title %}{{ profile_user.username }} — Minigramm{% endblock %}
+
+{% block content %}
+<div class="page">
+  <!-- Profile Header -->
+  <div class="card" style="padding: 32px; margin-bottom: 24px;">
+    <div style="display:flex; gap:32px; align-items:center; margin-bottom:24px;">
+      <div style="width:90px;height:90px;border-radius:50%;overflow:hidden;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;color:white;flex-shrink:0;">
+        {% if profile.avatar %}
+          <img src="{{ profile.avatar.url }}" style="width:100%;height:100%;object-fit:cover;" alt="">
+        {% else %}
+          {{ profile_user.username|first|upper }}
+        {% endif %}
+      </div>
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
+          <h1 style="font-size:22px;font-weight:600;">{{ profile_user.username }}</h1>
+          {% if profile_user == request.user %}
+            <a href="{% url 'edit_profile' %}" class="btn btn-outline btn-sm">Редактировать</a>
+          {% else %}
+            <button class="btn btn-sm {% if is_following %}btn-outline{% else %}btn-primary{% endif %} follow-btn"
+              data-username="{{ profile_user.username }}" data-following="{{ is_following|yesno:'true,false' }}">
+              {% if is_following %}Отписаться{% else %}Подписаться{% endif %}
+            </button>
+          {% endif %}
+        </div>
+        <div style="display:flex;gap:28px;margin-bottom:12px;">
+          <div style="text-align:center;">
+            <div style="font-weight:700;font-size:17px;">{{ posts.count }}</div>
+            <div style="font-size:13px;color:var(--text-muted);">публикаций</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-weight:700;font-size:17px;" id="followers-count">{{ profile.followers_count }}</div>
+            <div style="font-size:13px;color:var(--text-muted);">подписчиков</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-weight:700;font-size:17px;">{{ profile.following_count }}</div>
+            <div style="font-size:13px;color:var(--text-muted);">подписок</div>
+          </div>
+        </div>
+        {% if profile_user.first_name %}
+          <div style="font-weight:600;margin-bottom:4px;">{{ profile_user.first_name }}</div>
+        {% endif %}
+        {% if profile.bio %}
+          <div style="font-size:14px;color:var(--text-muted);line-height:1.5;">{{ profile.bio }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Posts Grid -->
+  {% if posts %}
+  <div class="card" style="overflow:hidden;">
+    <div class="profile-grid">
+      {% for post in posts %}
+      <a href="{% url 'post_detail' post.id %}" class="profile-grid-item">
+        {% if post.image %}
+          <img src="{{ post.image.url }}" alt="">
+        {% else %}
+          <div style="width:100%;height:100%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--text-muted);padding:12px;text-align:center;">
+            {{ post.caption|truncatechars:60 }}
+          </div>
+        {% endif %}
+        <div class="overlay">
+          <span>❤️ {{ post.likes_count }}</span>
+          <span>💬 {{ post.comments.count }}</span>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">📷</div>
+    <div class="empty-title">Нет публикаций</div>
+    {% if profile_user == request.user %}
+    <p class="text-muted" style="margin-bottom:16px;">Поделитесь первым моментом</p>
+    <a href="{% url 'create_post' %}" class="btn btn-primary btn-sm">Создать пост</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const followBtn = document.querySelector('.follow-btn');
+if (followBtn) {
+  followBtn.addEventListener('click', async function() {
+    const username = this.dataset.username;
+    const res = await fetch(`/profile/${username}/follow/`, {
+      method: 'POST',
+      headers: {'X-CSRFToken': getCookie('csrftoken')}
+    });
+    const data = await res.json();
+    this.dataset.following = data.following;
+    if (data.following) {
+      this.textContent = 'Отписаться';
+      this.className = 'btn btn-sm btn-outline follow-btn';
+    } else {
+      this.textContent = 'Подписаться';
+      this.className = 'btn btn-sm btn-primary follow-btn';
+    }
+    document.getElementById('followers-count').textContent = data.count;
+  });
+}
+
+function getCookie(name) {
+  const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+  return v ? v[2] : null;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block title %}Лента — Minigramm{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  {% if not posts %}
+  <div class="empty-state">
+    <div class="empty-icon">📸</div>
+    <div class="empty-title">Лента пуста</div>
+    <p class="text-muted">Подпишитесь на пользователей или создайте первый пост</p>
+    <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;">
+      <a href="{% url 'explore' %}" class="btn btn-outline btn-sm">Найти людей</a>
+      <a href="{% url 'create_post' %}" class="btn btn-primary btn-sm">Создать пост</a>
+    </div>
+  </div>
+  {% endif %}
+
+  {% for post in posts %}
+  <div class="card post">
+    <div class="post-header">
+      <a href="{% url 'profile' post.author.username %}" class="post-avatar">
+        {% if post.author.profile.avatar %}
+          <img src="{{ post.author.profile.avatar.url }}" alt="" style="width:100%;height:100%;object-fit:cover;">
+        {% else %}
+          {{ post.author.username|first|upper }}
+        {% endif %}
+      </a>
+      <div class="post-meta">
+        <a href="{% url 'profile' post.author.username %}" class="post-username">{{ post.author.username }}</a>
+        <div class="post-time">{{ post.created_at|timesince }} назад</div>
+      </div>
+      {% if post.author == request.user %}
+      <div class="dropdown">
+        <button class="btn-icon post-more" data-dropdown="#drop-{{ post.id }}">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"/>
+          </svg>
+        </button>
+        <div class="dropdown-menu" id="drop-{{ post.id }}">
+          <a href="{% url 'post_detail' post.id %}" class="dropdown-item">Открыть пост</a>
+          <form method="post" action="{% url 'delete_post' post.id %}">
+            {% csrf_token %}
+            <button type="submit" class="dropdown-item danger" onclick="return confirm('Удалить пост?')">Удалить</button>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if post.image %}
+    <a href="{% url 'post_detail' post.id %}">
+      <img src="{{ post.image.url }}" class="post-image" alt="пост">
+    </a>
+    {% endif %}
+
+    <div class="post-actions">
+      <button class="btn-icon like-btn {% if request.user in post.likes.all %}liked{% endif %}" data-post="{{ post.id }}">
+        <svg width="22" height="22" fill="{% if request.user in post.likes.all %}currentColor{% else %}none{% endif %}" viewBox="0 0 24 24" stroke="currentColor" class="like-icon">
+          {% if request.user in post.likes.all %}
+          <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+          {% else %}
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+          {% endif %}
+        </svg>
+      </button>
+      <a href="{% url 'post_detail' post.id %}" class="btn-icon">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+        </svg>
+        {{ post.comments.count }}
+      </a>
+    </div>
+
+    {% if post.likes_count %}
+    <div class="post-likes">
+      <span class="like-count-{{ post.id }}">{{ post.likes_count }} отметок</span>
+    </div>
+    {% endif %}
+
+    {% if post.caption %}
+    <div class="post-caption {% if not post.image %}post-no-image{% endif %}">
+      <strong>{{ post.author.username }}</strong>{{ post.caption }}
+    </div>
+    {% endif %}
+
+    <div class="post-comments">
+      {% with comments=post.comments.all %}
+      {% if comments.count > 2 %}
+        <a href="{% url 'post_detail' post.id %}" class="view-comments">Посмотреть все {{ comments.count }} комментариев</a>
+      {% endif %}
+      <div class="comments-box-{{ post.id }}">
+        {% for comment in comments|slice:"-2:" %}
+        <div class="comment"><strong>{{ comment.author.username }}</strong>{{ comment.text }}</div>
+        {% endfor %}
+      </div>
+      {% endwith %}
+    </div>
+
+    <form class="comment-form" data-post="{{ post.id }}">
+      {% csrf_token %}
+      <input type="text" class="comment-input" placeholder="Добавьте комментарий...">
+      <button type="submit" class="comment-submit">Опубликовать</button>
+    </form>
+  </div>
+  {% endfor %}
+
+</div>
+{% endblock %}

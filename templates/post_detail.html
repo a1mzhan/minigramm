@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}Пост — Minigramm{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="card post">
+    <div class="post-header">
+      <a href="{% url 'profile' post.author.username %}" class="post-avatar">
+        {% if post.author.profile.avatar %}
+          <img src="{{ post.author.profile.avatar.url }}" alt="" style="width:100%;height:100%;object-fit:cover;">
+        {% else %}{{ post.author.username|first|upper }}{% endif %}
+      </a>
+      <div class="post-meta">
+        <a href="{% url 'profile' post.author.username %}" class="post-username">{{ post.author.username }}</a>
+        <div class="post-time">{{ post.created_at|date:"d M Y" }}</div>
+      </div>
+      {% if post.author == request.user %}
+      <div class="dropdown">
+        <button class="btn-icon" data-dropdown="#drop-det">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"/>
+          </svg>
+        </button>
+        <div class="dropdown-menu" id="drop-det">
+          <form method="post" action="{% url 'delete_post' post.id %}">
+            {% csrf_token %}
+            <button type="submit" class="dropdown-item danger" onclick="return confirm('Удалить?')">Удалить пост</button>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if post.image %}
+    <img src="{{ post.image.url }}" class="post-image" alt="">
+    {% endif %}
+
+    <div class="post-actions">
+      <button class="btn-icon like-btn {% if request.user in post.likes.all %}liked{% endif %}" data-post="{{ post.id }}">
+        <svg width="22" height="22" fill="{% if request.user in post.likes.all %}currentColor{% else %}none{% endif %}" viewBox="0 0 24 24" stroke="currentColor" class="like-icon">
+          {% if request.user in post.likes.all %}
+          <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+          {% else %}
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+          {% endif %}
+        </svg>
+      </button>
+    </div>
+
+    {% if post.likes_count %}
+    <div class="post-likes">
+      <span class="like-count-{{ post.id }}">{{ post.likes_count }} отметок</span>
+    </div>
+    {% endif %}
+
+    {% if post.caption %}
+    <div class="post-caption">
+      <strong>{{ post.author.username }}</strong>{{ post.caption }}
+    </div>
+    {% endif %}
+
+    <!-- All comments -->
+    <div class="post-comments">
+      <div class="comments-box-{{ post.id }}">
+        {% for comment in post.comments.all %}
+        <div class="comment" style="margin-bottom:8px;">
+          <strong><a href="{% url 'profile' comment.author.username %}" style="color:var(--text);text-decoration:none;">{{ comment.author.username }}</a></strong>
+          {{ comment.text }}
+          <span style="font-size:11px;color:var(--text-muted);margin-left:8px;">{{ comment.created_at|timesince }} назад</span>
+        </div>
+        {% empty %}
+        <p class="text-muted" style="font-size:13px;">Нет комментариев. Будьте первым!</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <form class="comment-form" data-post="{{ post.id }}">
+      {% csrf_token %}
+      <input type="text" class="comment-input" placeholder="Добавьте комментарий...">
+      <button type="submit" class="comment-submit">Опубликовать</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

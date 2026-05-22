@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Регистрация — Minigramm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0a0f; --surface: #12121a; --surface2: #1a1a26; --border: #2a2a3d;
+    --text: #f0f0f8; --text-muted: #8888aa; --accent: #c084fc;
+    --gradient: linear-gradient(135deg, #c084fc, #f472b6, #fb923c);
+  }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image: radial-gradient(ellipse at 80% 50%, rgba(192,132,252,0.07) 0%, transparent 50%),
+                      radial-gradient(ellipse at 20% 80%, rgba(244,114,182,0.07) 0%, transparent 50%);
+  }
+  .auth-container { width: 100%; max-width: 420px; padding: 16px; }
+  .auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 40px 36px; }
+  .logo { text-align: center; font-family: 'Playfair Display', serif; font-style: italic; font-size: 40px; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 8px; }
+  .tagline { text-align: center; color: var(--text-muted); font-size: 14px; margin-bottom: 36px; }
+  .form-group { margin-bottom: 14px; }
+  .form-label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 6px; letter-spacing: 0.5px; text-transform: uppercase; }
+  .form-control { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--text); outline: none; transition: border-color 0.2s; }
+  .form-control:focus { border-color: var(--accent); }
+  .form-control::placeholder { color: var(--text-muted); }
+  .btn-submit { width: 100%; padding: 13px; background: var(--gradient); border: none; border-radius: 10px; color: white; font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; margin-top: 20px; transition: opacity 0.2s, transform 0.2s; }
+  .btn-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+  .auth-alt { text-align: center; margin-top: 24px; font-size: 14px; color: var(--text-muted); }
+  .auth-alt a { color: var(--accent); text-decoration: none; font-weight: 500; }
+  .errorlist { list-style: none; }
+  .errorlist li { font-size: 12px; color: #f87171; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="logo">Minigramm</div>
+    <div class="tagline">Создайте аккаунт и делитесь моментами</div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Имя пользователя</label>
+        <input type="text" name="username" class="form-control" placeholder="cool_username" value="{{ form.username.value|default:'' }}">
+        {% if form.username.errors %}<ul class="errorlist">{% for e in form.username.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" name="email" class="form-control" placeholder="you@example.com" value="{{ form.email.value|default:'' }}">
+        {% if form.email.errors %}<ul class="errorlist">{% for e in form.email.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Пароль</label>
+        <input type="password" name="password1" class="form-control" placeholder="Минимум 8 символов">
+        {% if form.password1.errors %}<ul class="errorlist">{% for e in form.password1.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Повторите пароль</label>
+        <input type="password" name="password2" class="form-control" placeholder="Ещё раз">
+        {% if form.password2.errors %}<ul class="errorlist">{% for e in form.password2.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+      <button type="submit" class="btn-submit">Создать аккаунт</button>
+    </form>
+    <div class="auth-alt">
+      Уже есть аккаунт? <a href="{% url 'login' %}">Войти</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

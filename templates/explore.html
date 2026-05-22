@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Поиск — Minigramm{% endblock %}
+
+{% block content %}
+<div class="page-wide">
+
+  <!-- Search bar -->
+  <form method="get" style="margin-bottom:32px;">
+    <div style="display:flex;gap:12px;">
+      <input type="text" name="q" value="{{ query }}" placeholder="Поиск пользователей или постов..."
+        style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 18px;font-size:15px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none;transition:border-color 0.2s;"
+        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+      <button type="submit" class="btn btn-primary">Найти</button>
+    </div>
+  </form>
+
+  {% if query %}
+    <!-- Users -->
+    {% if users %}
+    <h2 style="font-size:16px;font-weight:600;margin-bottom:16px;color:var(--text-muted);">Пользователи</h2>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:32px;">
+      {% for u in users %}
+      <a href="{% url 'profile' u.username %}" style="text-decoration:none;">
+        <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:14px;transition:all 0.2s;">
+          <div style="width:44px;height:44px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-weight:700;color:white;font-size:18px;overflow:hidden;flex-shrink:0;">
+            {% if u.profile.avatar %}<img src="{{ u.profile.avatar.url }}" style="width:100%;height:100%;object-fit:cover;" alt="">
+            {% else %}{{ u.username|first|upper }}{% endif %}
+          </div>
+          <div>
+            <div style="font-weight:600;font-size:15px;color:var(--text);">{{ u.username }}</div>
+            {% if u.first_name %}<div style="font-size:13px;color:var(--text-muted);">{{ u.first_name }}</div>{% endif %}
+          </div>
+          <div style="margin-left:auto;font-size:13px;color:var(--text-muted);">{{ u.posts.count }} постов</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Posts -->
+    {% if posts %}
+    <h2 style="font-size:16px;font-weight:600;margin-bottom:16px;color:var(--text-muted);">Посты</h2>
+    <div class="card" style="overflow:hidden;">
+      <div class="profile-grid">
+        {% for post in posts %}
+        <a href="{% url 'post_detail' post.id %}" class="profile-grid-item">
+          {% if post.image %}<img src="{{ post.image.url }}" alt="">
+          {% else %}
+          <div style="width:100%;height:100%;background:var(--surface2);display:flex;align-items:center;justify-content:center;padding:12px;text-align:center;font-size:13px;color:var(--text-muted);">{{ post.caption|truncatechars:60 }}</div>
+          {% endif %}
+          <div class="overlay">❤️ {{ post.likes_count }}</div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if not users and not posts %}
+    <div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <div class="empty-title">Ничего не найдено</div>
+      <p class="text-muted">Попробуйте другой запрос</p>
+    </div>
+    {% endif %}
+
+  {% else %}
+    <!-- Explore grid — all posts -->
+    <h2 style="font-size:16px;font-weight:600;margin-bottom:16px;color:var(--text-muted);">Все публикации</h2>
+    {% if posts %}
+    <div class="card" style="overflow:hidden;">
+      <div class="profile-grid">
+        {% for post in posts %}
+        <a href="{% url 'post_detail' post.id %}" class="profile-grid-item">
+          {% if post.image %}<img src="{{ post.image.url }}" alt="">
+          {% else %}
+          <div style="width:100%;height:100%;background:var(--surface2);display:flex;align-items:center;justify-content:center;padding:12px;text-align:center;font-size:13px;color:var(--text-muted);">{{ post.caption|truncatechars:80 }}</div>
+          {% endif %}
+          <div class="overlay">
+            <span>❤️ {{ post.likes_count }}</span>
+            <span>💬 {{ post.comments.count }}</span>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">🌍</div>
+      <div class="empty-title">Пока нет публикаций</div>
+    </div>
+    {% endif %}
+  {% endif %}
+
+</div>
+{% endblock %}
