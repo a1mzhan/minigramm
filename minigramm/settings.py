@@ -5,6 +5,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-minigramm-secret-key-2024'
 DEBUG = True
 ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS = ['https://web-production-495bc.up.railway.app']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
