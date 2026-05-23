@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.db.models import Q
 from django.utils import timezone
-from .models import Profile, Post, Comment, Message, Notification 
+from .models import Profile, Post, Comment, Message, Notification
 from .forms import SignupForm, PostForm, CommentForm, ProfileEditForm
 from django.contrib.auth.forms import AuthenticationForm
 
@@ -266,43 +266,3 @@ def get_notifications_count(request):
     count =  request.user.notifications.filter(is_read=False).count()
     unread_msgs = Message.objects.filter(receiver=request.user, is_read=False).count()
     return JsonResponse({'count': count, 'messages': unread_msgs})
-# === REELS ===
-
-@login_required
-def reels(request):
-    reels = Reel.objects.all().select_related('author', 'author__profile')
-    return render(request, 'reels.html', {'reels': reels})
-
-
-@login_required
-def create_reel(request):
-    if request.method == 'POST':
-        video = request.FILES.get('video')
-        caption = request.POST.get('caption', '')
-        if video:
-            Reel.objects.create(author=request.user, video=video, caption=caption)
-            return redirect('reels')
-    return render(request, 'create_reel.html')
-
-
-@login_required
-@require_POST
-def toggle_reel_like(request, pk):
-    reel = get_object_or_404(Reel, pk=pk)
-    if request.user in reel.likes.all():
-        reel.likes.remove(request.user)
-        liked = False
-    else:
-        reel.likes.add(request.user)
-        liked = True
-    return JsonResponse({'liked': liked, 'count': reel.likes_count()})
-from django.contrib.auth.models import User
-
-class Reel(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    video = models.FileField(upload_to='reels/')
-    caption = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.user.username} Reel"
