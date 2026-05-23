@@ -273,7 +273,7 @@ def ai_chat(request):
     response = None
     if request.method == 'POST':
         user_message = request.POST.get('message')
-        client = Groq(api_key=os.environ.get('GROQ_API_KEY'))
+        client = Groq(api_key=os.environ.get('GROQ_API_KEY', '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'))
         completion = client.chat.completions.create(
             model="llama3-8b-8192",
             messages=[{"role": "user", "content": user_message}]
