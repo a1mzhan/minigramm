@@ -1,11 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.db.models import Q
-from .models import Profile, Post, Comment
+from django.utils import timezone
+from .models import Profile, Post, Comment, Message, Notification
 from .forms import SignupForm, PostForm, CommentForm, ProfileEditForm
 from django.contrib.auth.forms import AuthenticationForm
 
@@ -93,6 +94,12 @@ def post_detail(request, pk):
             comment.post = post
             comment.author = request.user
             comment.save()
+            if post.author != request.user:
+                Notification.objects.create(
+                    recipient=post.author, sender=request.user,
+                    notif_type='comment', post=post,
+                    text=f'{request.user.username} прокомментировал ваш пост'
+                )
             return redirect('post_detail', pk=pk)
     return render(request, 'post_detail.html', {'post': post, 'comment_form': comment_form})
 
@@ -126,7 +133,6 @@ def edit_profile(request):
         form = ProfileEditForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
             form.save()
-            # Update first_name
             request.user.first_name = request.POST.get('display_name', '')
             request.user.save()
             return redirect('profile', username=request.user.username)
@@ -145,6 +151,12 @@ def toggle_like(request, pk):
     else:
         post.likes.add(request.user)
         liked = True
+        if post.author != request.user:
+            Notification.objects.get_or_create(
+                recipient=post.author, sender=request.user,
+                notif_type='like', post=post,
+                defaults={'text': f'{request.user.username} оценил ваш пост'}
+            )
     return JsonResponse({'liked': liked, 'count': post.likes_count()})
 
 
@@ -159,6 +171,11 @@ def toggle_follow(request, username):
     else:
         target_profile.followers.add(request.user)
         following = True
+        Notification.objects.create(
+            recipient=target_user, sender=request.user,
+            notif_type='follow',
+            text=f'{request.user.username} подписался на вас'
+        )
     return JsonResponse({'following': following, 'count': target_profile.followers_count()})
 
 
@@ -169,10 +186,84 @@ def add_comment(request, pk):
     text = request.POST.get('text', '').strip()
     if text:
         comment = Comment.objects.create(post=post, author=request.user, text=text)
-        return JsonResponse({
-            'success': True,
-            'username': request.user.username,
-            'text': comment.text,
-            'id': comment.id,
-        })
+        if post.author != request.user:
+            Notification.objects.create(
+                recipient=post.author, sender=request.user,
+                notif_type='comment', post=post,
+                text=f'{request.user.username} прокомментировал ваш пост'
+            )
+        return JsonResponse({'success': True, 'username': request.user.username, 'text': comment.text, 'id': comment.id})
     return JsonResponse({'success': False})
+
+
+@login_required
+def inbox(request):
+    user = request.user
+    sent = Message.objects.filter(sender=user).values_list('receiver', flat=True)
+    received = Message.objects.filter(receiver=user).values_list('sender', flat=True)
+    partner_ids = set(list(sent) + list(received))
+    conversations = []
+    for pid in partner_ids:
+        partner = User.objects.get(id=pid)
+        last_msg = Message.objects.filter(
+            Q(sender=user, receiver=partner) | Q(sender=partner, receiver=user)
+        ).last()
+        unread = Message.objects.filter(sender=partner, receiver=user, is_read=False).count()
+        conversations.append({'partner': partner, 'last_msg': last_msg, 'unread': unread})
+    conversations.sort(key=lambda x: x['last_msg'].created_at if x['last_msg'] else timezone.now(), reverse=True)
+    return render(request, 'inbox.html', {'conversations': conversations})
+
+
+@login_required
+def chat(request, username):
+    partner = get_object_or_404(User, username=username)
+    if partner == request.user:
+        return redirect('inbox')
+    Message.objects.filter(sender=partner, receiver=request.user, is_read=False).update(is_read=True)
+    messages = Message.objects.filter(
+        Q(sender=request.user, receiver=partner) | Q(sender=partner, receiver=request.user)
+    ).order_by('created_at')
+    return render(request, 'chat.html', {'partner': partner, 'messages': messages})
+
+
+@login_required
+@require_POST
+def send_message(request, username):
+    partner = get_object_or_404(User, username=username)
+    text = request.POST.get('text', '').strip()
+    if text and partner != request.user:
+        msg = Message.objects.create(sender=request.user, receiver=partner, text=text)
+        Notification.objects.create(
+            recipient=partner, sender=request.user,
+            notif_type='message',
+            text=f'{request.user.username} написал вам сообщение'
+        )
+        return JsonResponse({'success': True, 'id': msg.id, 'text': msg.text, 'sender': request.user.username, 'time': msg.created_at.strftime('%H:%M')})
+    return JsonResponse({'success': False})
+
+
+@login_required
+def get_messages(request, username):
+    partner = get_object_or_404(User, username=username)
+    after_id = request.GET.get('after', 0)
+    messages = Message.objects.filter(
+        Q(sender=request.user, receiver=partner) | Q(sender=partner, receiver=request.user),
+        id__gt=after_id
+    ).order_by('created_at')
+    messages.filter(sender=partner, receiver=request.user).update(is_read=True)
+    data = [{'id': m.id, 'text': m.text, 'sender': m.sender.username, 'time': m.created_at.strftime('%H:%M'), 'is_me': m.sender == request.user} for m in messages]
+    return JsonResponse({'messages': data})
+
+
+@login_required
+def notifications(request):
+    notifs = request.user.notifications.all()[:50]
+    notifs.filter(is_read=False).update(is_read=True)
+    return render(request, 'notifications.html', {'notifs': notifs})
+
+
+@login_required
+def get_notifications_count(request):
+    count = request.user.notifications.filter(is_read=False).count()
+    unread_msgs = Message.objects.filter(receiver=request.user, is_read=False).count()
+    return JsonResponse({'count': count, 'messages': unread_msgs})
