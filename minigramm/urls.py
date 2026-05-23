@@ -24,5 +24,6 @@ urlpatterns = [
     path('chat/<str:username>/send/', views.send_message, name='send_message'),
     path('chat/<str:username>/poll/', views.get_messages, name='get_messages'),
     path('notifications/', views.notifications, name='notifications'),
+path('ai-chat/', views.ai_chat, name='ai_chat'),
     path('api/notifications/', views.get_notifications_count, name='notif_count'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

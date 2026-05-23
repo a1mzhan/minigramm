@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="max-width: 600px; margin: 40px auto; padding: 20px;">
+    <h2 style="margin-bottom: 20px;">🤖 ИИ Чат</h2>
+    
+    <form method="POST">
+        {% csrf_token %}
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <input 
+                type="text" 
+                name="message" 
+                placeholder="Напиши что-нибудь..." 
+                style="flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #333; background: #1a1a1a; color: white; font-size: 15px;"
+                autofocus
+            >
+            <button 
+                type="submit"
+                style="padding: 12px 20px; background: #6c63ff; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 15px;"
+            >
+                Отправить
+            </button>
+        </div>
+    </form>
+
+    {% if response %}
+    <div style="background: #1a1a1a; border-radius: 10px; padding: 20px; border: 1px solid #333;">
+        <p style="color: #6c63ff; margin-bottom: 10px;">🤖 ИИ:</p>
+        <p style="line-height: 1.6;">{{ response }}</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

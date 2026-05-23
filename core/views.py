@@ -266,3 +266,20 @@ def get_notifications_count(request):
     count =  request.user.notifications.filter(is_read=False).count()
     unread_msgs = Message.objects.filter(receiver=request.user, is_read=False).count()
     return JsonResponse({'count': count, 'messages': unread_msgs})
+from groq import Groq
+
+def ai_chat(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
+    response = None
+    if request.method == 'POST':
+        user_message = request.POST.get('message')
+        client = Groq(api_key=os.environ.get('GROQ_API_KEY'))
+        completion = client.chat.completions.create(
+            model="llama3-8b-8192",
+            messages=[{"role": "user", "content": user_message}]
+        )
+        response = completion.choices[0].message.content
+    
+    return render(request, 'ai_chat.html', {'response': response})
