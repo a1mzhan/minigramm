@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
+from groq import Groq
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.http import JsonResponse
@@ -266,12 +267,8 @@ def get_notifications_count(request):
     count =  request.user.notifications.filter(is_read=False).count()
     unread_msgs = Message.objects.filter(receiver=request.user, is_read=False).count()
     return JsonResponse({'count': count, 'messages': unread_msgs})
-from groq import Groq
-
+@login_required
 def ai_chat(request):
-    if not request.user.is_authenticated:
-        return redirect('login')
-    
     response = None
     if request.method == 'POST':
         user_message = request.POST.get('message')
@@ -281,5 +278,4 @@ def ai_chat(request):
             messages=[{"role": "user", "content": user_message}]
         )
         response = completion.choices[0].message.content
-    
     return render(request, 'ai_chat.html', {'response': response})
