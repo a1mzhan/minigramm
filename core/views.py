@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.db.models import Q
 from django.utils import timezone
-from .models import Profile, Post, Comment, Message, Notification, Reel
+from .models import Profile, Post, Comment, Message, Notification 
 from .forms import SignupForm, PostForm, CommentForm, ProfileEditForm
 from django.contrib.auth.forms import AuthenticationForm
 
