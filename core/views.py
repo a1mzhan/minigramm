@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+import os
 from django.contrib.auth import login, logout
 from groq import Groq
 from django.contrib.auth.decorators import login_required
