@@ -19,6 +19,7 @@
           {% if profile_user == request.user %}
             <a href="{% url 'edit_profile' %}" class="btn btn-outline btn-sm">Редактировать</a>
           {% else %}
+            <a href="{% url 'chat' profile_user.username %}" class="btn btn-outline btn-sm">💬 Написать</a>
             <button class="btn btn-sm {% if is_following %}btn-outline{% else %}btn-primary{% endif %} follow-btn"
               data-username="{{ profile_user.username }}" data-following="{{ is_following|yesno:'true,false' }}">
               {% if is_following %}Отписаться{% else %}Подписаться{% endif %}

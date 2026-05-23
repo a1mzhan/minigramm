@@ -1,1 +1,59 @@
-404: Not Found
+{% extends 'base.html' %}
+{% block title %}Сообщения — Minigramm{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+    <h1 style="font-size:22px;font-weight:700;">Сообщения</h1>
+    <a href="{% url 'explore' %}" class="btn btn-outline btn-sm">Найти людей</a>
+  </div>
+
+  <div class="card">
+    {% if conversations %}
+      {% for conv in conversations %}
+      <a href="{% url 'chat' conv.partner.username %}" style="text-decoration:none;">
+        <div style="display:flex;align-items:center;gap:14px;padding:16px;border-bottom:1px solid var(--border);transition:background 0.15s;position:relative;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">
+          
+          <div style="position:relative;">
+            <div style="width:52px;height:52px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:white;overflow:hidden;flex-shrink:0;">
+              {% if conv.partner.profile.avatar %}
+                <img src="{{ conv.partner.profile.avatar.url }}" style="width:100%;height:100%;object-fit:cover;">
+              {% else %}
+                {{ conv.partner.username|first|upper }}
+              {% endif %}
+            </div>
+            <div style="position:absolute;bottom:1px;right:1px;width:13px;height:13px;background:#4ade80;border-radius:50%;border:2px solid var(--surface);"></div>
+          </div>
+
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:600;font-size:15px;color:var(--text);">{{ conv.partner.username }}</div>
+            <div style="font-size:13px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;">
+              {% if conv.last_msg %}
+                {% if conv.last_msg.sender == request.user %}Вы: {% endif %}
+                {{ conv.last_msg.text|truncatechars:40 }}
+              {% endif %}
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+            {% if conv.last_msg %}
+            <div style="font-size:11px;color:var(--text-muted);">{{ conv.last_msg.created_at|timesince }}</div>
+            {% endif %}
+            {% if conv.unread %}
+            <div style="background:var(--accent);color:white;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">{{ conv.unread }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">💬</div>
+      <div class="empty-title">Нет сообщений</div>
+      <p class="text-muted" style="margin-bottom:16px;">Найдите людей и начните общаться</p>
+      <a href="{% url 'explore' %}" class="btn btn-primary btn-sm">Найти людей</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
