@@ -258,11 +258,11 @@ def get_messages(request, username):
 @login_required
 def notifications(request):
     request.user.notifications.filter(is_read=False).update(is_read=True)
-    notifs = 
-request.user.notifications.all()[:50]
+    notifs = request.user.notifications.all()[:50]
+    return render(request, 'notifications.html', {'notifs': notifs})
 
 @login_required
 def get_notifications_count(request):
-    count = request.user.notifications.filter(is_read=False).count()
+    count =  request.user.notifications.filter(is_read=False).count()
     unread_msgs = Message.objects.filter(receiver=request.user, is_read=False).count()
     return JsonResponse({'count': count, 'messages': unread_msgs})
