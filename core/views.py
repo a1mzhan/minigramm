@@ -296,3 +296,13 @@ def toggle_reel_like(request, pk):
         reel.likes.add(request.user)
         liked = True
     return JsonResponse({'liked': liked, 'count': reel.likes_count()})
+from django.contrib.auth.models import User
+
+class Reel(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    video = models.FileField(upload_to='reels/')
+    caption = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} Reel"
