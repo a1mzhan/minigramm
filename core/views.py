@@ -258,7 +258,8 @@ def get_messages(request, username):
 @login_required
 def notifications(request):
     request.user.notifications.filter(is_read=False).update(is_read=True)
-    notifs = request.user.notifications.all()[:50]
+    notifs = 
+request.user.notifications.all()[:50]
 
 @login_required
 def get_notifications_count(request):
