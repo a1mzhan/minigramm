@@ -1,1 +1,1 @@
-web: gunicorn minigramm.wsgi --log-file - 
+web: python manage.py migrate && gunicorn minigramm.wsgi --log-file -
